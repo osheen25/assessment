@@ -4,17 +4,17 @@ const { User, WalletTransaction, GoldTransaction } = require('../models');
 
 router.get('/portfolio', async (req, res) => {
   try {
-    const userId = req.user._id; // Assuming that the user ID is available in the request object
+    const userId = req.user.id; // Assuming that the user ID is available in the request object
     const walletTransactions = await WalletTransaction.find({ userId });
     const goldTransactions = await GoldTransaction.find({ userId });
     const user = await User.findById(userId);
     
     // Calculate net funds added to wallet
-    const netFundAdded = walletTransactions.reduce((total, tx) => {
-      if (tx.type === 'CREDIT') {
-        total += tx.amount;
+    const netFundAdded = walletTransactions.reduce((total, tax) => {
+      if (tax.type === 'CREDIT') {
+        total += tax.amount;
       } else {
-        total -= tx.amount;
+        total -= tax.amount;
       }
       return total;
     }, 0);
@@ -25,11 +25,11 @@ router.get('/portfolio', async (req, res) => {
     // Calculate net growth or loss in gold investment
     const goldQuantity = user.runningBalance.gold;
     const totalAmountSpent = goldTransactions
-      .filter(tx => tx.type === 'DEBIT')
-      .reduce((total, tx) => total + tx.amount, 0);
+      .filter(tax => tax.type === 'DEBIT')
+      .reduce((total, tax) => total + tax.amount, 0);
     const totalAmountEarned = goldTransactions
-      .filter(tx => tx.type === 'CREDIT')
-      .reduce((total, tx) => total + tx.amount, 0);
+      .filter(tax => tax.type === 'CREDIT')
+      .reduce((total, tax) => total + tax.amount, 0);
     const netGrowthOrLoss = (totalAmountEarned - totalAmountSpent) * user.runningBalance.goldPrice;
 
     // Calculate percentage gain or loss in gold investment
